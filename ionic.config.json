@@ -1,0 +1,8 @@
+{
+  "name": "SalesPA",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular",
+  "id": "ae2d8a2c"
+}
