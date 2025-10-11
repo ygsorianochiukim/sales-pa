@@ -1,16 +1,18 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { HomeComponent } from './Views/home/home.component';
+import { CustomerComponent } from './Views/customer/customer.component';
+import { SalesPAComponent } from './Views/sales-pa/sales-pa.component';
+import { PaymentsComponent } from './Views/payments/payments.component';
+import { SubsequentComponent } from './Views/subsequent/subsequent.component';
 
 const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'folder/inbox',
-    pathMatch: 'full'
-  },
-  {
-    path: 'folder/:id',
-    loadChildren: () => import('./folder/folder.module').then( m => m.FolderPageModule)
-  }
+  {path:'',redirectTo: 'home' , pathMatch:'full'},
+  {path:'home',component:HomeComponent},
+  {path:'customer',component:CustomerComponent},
+  {path:'purchase',component:SalesPAComponent},
+  {path:'payment',component:PaymentsComponent},
+  {path:'subsequent',component:SubsequentComponent},
 ];
 
 @NgModule({
