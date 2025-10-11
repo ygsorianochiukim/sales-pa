@@ -34,8 +34,16 @@ export class CustomerComponent implements OnInit {
     province: '',
     municipality: '',
     barangay: '',
+    purok: '',
     zipcode: 0,
-    otp: ''
+    civil_status: '',
+    sex: '',
+    birthdate: new Date(),
+    birthplace: '',
+    occupation: '',
+    company_name: '',
+    created_by: 2,
+    otp: '',
   };
 
   constructor(private BuyersServices: Buyers) {}
