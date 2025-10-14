@@ -6,7 +6,7 @@ export interface Buyer {
     municipality?: string,
     barangay?: string,
     purok?: string,
-    zipcode?: number,
+    zipcode?: number | null,
     civil_status?: string,
     sex?: string,
     birthdate?: Date,

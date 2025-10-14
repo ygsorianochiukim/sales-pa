@@ -6,10 +6,12 @@ import { RouterLink } from '@angular/router';
 import { LucideAngularModule, User, Phone, RectangleEllipsis } from 'lucide-angular';
 import { Buyer } from 'src/app/Models/Buyers/buyer.model';
 import { Buyers } from 'src/app/Services/Buyers/buyers';
+import { IonItem } from "@ionic/angular/standalone";
+import { IonicModule } from '@ionic/angular';
 
 @Component({
   selector: 'app-customer',
-  imports: [LucideAngularModule, RouterLink, FormsModule, CommonModule, HttpClientModule],
+  imports: [IonicModule, LucideAngularModule, RouterLink, FormsModule, CommonModule, HttpClientModule],
   templateUrl: './customer.component.html',
   styleUrls: ['./customer.component.scss'],
   providers: [Buyers]
@@ -29,13 +31,13 @@ export class CustomerComponent implements OnInit {
   };
 
   buyersField: Buyer = {
-    buyers_name: this.nameFields.first_name + ' ' +this.nameFields.middle_name + ' ' + this.nameFields.last_name,
+    buyers_name:'',
     contact_number: '',
     province: '',
     municipality: '',
     barangay: '',
     purok: '',
-    zipcode: 0,
+    zipcode: null,
     civil_status: '',
     sex: '',
     birthdate: new Date(),
@@ -52,6 +54,7 @@ export class CustomerComponent implements OnInit {
   nextStep() {
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep++;
+      this.generateOTP();
     }
   }
 
@@ -66,6 +69,7 @@ export class CustomerComponent implements OnInit {
   }
 
   submitBuyersInfo() {
+    this.buyersField.buyers_name = this.nameFields.first_name + ' ' +this.nameFields.middle_name + ' ' + this.nameFields.last_name,
     this.BuyersServices.storeBuyers(this.buyersField).subscribe(() => {
       this.reset();
     });
