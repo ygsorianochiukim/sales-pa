@@ -1,24 +1,24 @@
 import { Component } from '@angular/core';
 import { Camera, CameraDirection, CameraResultType } from '@capacitor/camera';
 import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
-import Tesseract from 'tesseract.js';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { LucideAngularModule, Fullscreen, QrCode } from 'lucide-angular';
 import { IonicModule, Platform } from '@ionic/angular';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import jsQR from 'jsqr';
+import { PurchaseServices } from 'src/app/Services/Purchase/purchase';
 
 interface PersonData {
-  name: string;
-  id: string;
+  idType?: string;
+  name?: string;
+  id?: string;
   dateOfBirth?: string;
   address?: string;
   image?: string;
   rawText?: string;
   timestamp?: Date;
-  idType?: string;
 }
 
 @Component({
@@ -27,50 +27,44 @@ interface PersonData {
   styleUrls: ['./scan-id.component.scss'],
   standalone: true,
   imports: [IonicModule, CommonModule, FormsModule, HttpClientModule, LucideAngularModule, RouterLink],
+  providers: [PurchaseServices]
 })
 export class ScanIDComponent {
   readonly camera = Fullscreen;
   readonly qrcode = QrCode;
+
   scanning = false;
   loading = false;
-  scanResult = '';
   capturedImage = '';
   currentPersonData: PersonData | null = null;
-  scannedIds: PersonData[] = [];
-  filteredIds: PersonData[] = [];
-  searchQuery = '';
-  selectedPerson: PersonData | null = null;
   selectedID: string | null = null;
   isWeb = false;
 
-  constructor(private platform: Platform) {
+  PaDisplay: string = '';
+  Name: string = '';
+  number: string = '';
+
+  constructor(private platform: Platform, private router: Router, private PurchaseServices : PurchaseServices) {
     this.isWeb = !this.platform.is('capacitor');
   }
 
-  ngOnInit() {}
-
-  // Main action
   async startCamera() {
-    if (!this.selectedID) return;
+    if (!this.selectedID) {
+      alert('Please select an ID type first.');
+      return;
+    }
 
     if (this.selectedID === 'National ID') {
-      // For web or fallback
-      if (this.isWeb) {
-        await this.uploadQRImage();
-      } else {
-        await this.startQRScanner();
-      }
+      this.isWeb ? await this.uploadQRImage() : await this.startQRScanner();
     } else {
       await this.startOCRScanner();
     }
   }
-
-  // 📸 QR Code Scanner (Mobile)
   async startQRScanner() {
     try {
       const permissions = await BarcodeScanner.requestPermissions();
       if (permissions.camera !== 'granted') {
-        alert('Camera permission is required for scanning QR codes.');
+        alert('Camera permission required.');
         return;
       }
 
@@ -91,8 +85,7 @@ export class ScanIDComponent {
       }
     } catch (error) {
       console.error('QR Scan Error:', error);
-      alert('QR scanning failed. You can upload a QR image instead.');
-      // fallback for mobile if camera scan fails
+      alert('QR scanning failed. Try uploading a QR image instead.');
       await this.uploadQRImage();
     } finally {
       this.scanning = false;
@@ -101,49 +94,66 @@ export class ScanIDComponent {
   async startOCRScanner() {
     try {
       this.scanning = true;
+
       const image = await Camera.getPhoto({
         quality: 100,
-        resultType: CameraResultType.DataUrl,
+        resultType: CameraResultType.Base64,
         allowEditing: false,
         direction: CameraDirection.Rear,
       });
 
-      if (!image?.dataUrl) {
+      if (!image?.base64String) {
         this.scanning = false;
         return;
       }
 
-      this.capturedImage = image.dataUrl;
+      this.capturedImage = `data:image/jpeg;base64,${image.base64String}`;
       this.loading = true;
-      this.scanResult = '';
 
-      const processedImage = await this.preprocessImage(image.dataUrl);
-      const { data } = await Tesseract.recognize(processedImage, 'eng', {
-        logger: (m) => console.log(m),
-      });
+      const processedImage = await this.preprocessImage(this.capturedImage);
+      const base64Data = processedImage.split(',')[1];
 
-      let text = data.text || '';
-      console.log('Raw OCR:', text);
-      text = this.cleanText(text);
-      this.scanResult = text;
-      const idType = this.detectIdType(text);
+      const apiKey = 'AIzaSyABmgNZ65tghNNB_lCA2cspOS1RmP0RNVg';
+      const visionUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+
+      const body = {
+        requests: [
+          {
+            image: { content: base64Data },
+            features: [{ type: 'TEXT_DETECTION' }],
+          },
+        ],
+      };
+
+      const response: any = await fetch(visionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then((res) => res.json());
+
+      const text = response?.responses?.[0]?.fullTextAnnotation?.text || '';
+      const clean = this.cleanText(text);
+      const parsed = this.parseDriversLicense(clean);
 
       this.currentPersonData = {
-        idType: idType,
-        name: this.extractName(text, idType) || 'Not detected',
-        id: this.extractIdNumber(text, idType) || 'Not detected',
-        image: image.dataUrl,
-        rawText: text,
+        idType: parsed.idType,
+        name: parsed.name,
+        id: parsed.licenseNumber || parsed.id,
+        dateOfBirth: parsed.birthDate,
+        address: parsed.address,
+        rawText: clean,
+        image: this.capturedImage,
         timestamp: new Date(),
       };
     } catch (err) {
-      console.error('Scan error:', err);
-      alert('Camera access failed or OCR error.');
+      console.error('OCR error:', err);
+      alert('OCR processing failed.');
     } finally {
       this.loading = false;
       this.scanning = false;
     }
   }
+
   async uploadQRImage() {
     return new Promise<void>((resolve) => {
       const input = document.createElement('input');
@@ -159,49 +169,37 @@ export class ScanIDComponent {
           this.capturedImage = imageData;
           this.loading = true;
 
-          try {
-            const img = new Image();
-            img.src = imageData;
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d')!;
-              canvas.width = img.width;
-              canvas.height = img.height;
-              ctx.drawImage(img, 0, 0, img.width, img.height);
+          const img = new Image();
+          img.src = imageData;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d')!;
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const data = ctx.getImageData(0, 0, img.width, img.height);
+            const code = jsQR(data.data, data.width, data.height);
 
-              const imageDataObj = ctx.getImageData(0, 0, img.width, img.height);
-              const code = jsQR(imageDataObj.data, imageDataObj.width, imageDataObj.height);
+            if (code) {
+              const qrValue = code.data;
+              this.currentPersonData = {
+                idType: 'National ID',
+                id: qrValue,
+                name: 'Detected from uploaded QR',
+                rawText: qrValue,
+                timestamp: new Date(),
+              };
+            } else alert('No QR detected.');
 
-              if (code) {
-                const qrValue = code.data;
-                this.currentPersonData = {
-                  idType: 'National ID',
-                  id: qrValue,
-                  name: 'Detected from uploaded QR',
-                  rawText: qrValue,
-                  timestamp: new Date(),
-                };
-              } else {
-                alert('No QR code detected in uploaded image.');
-              }
-
-              this.loading = false;
-              resolve();
-            };
-          } catch (err) {
-            console.error('QR image scan error:', err);
-            alert('Error reading QR from image.');
             this.loading = false;
             resolve();
-          }
+          };
         };
         reader.readAsDataURL(file);
       };
       input.click();
     });
   }
-
-  // 🧩 Utility & OCR methods
   private preprocessImage(dataUrl: string): Promise<string> {
     return new Promise((resolve) => {
       const img = new Image();
@@ -215,96 +213,67 @@ export class ScanIDComponent {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          const value = avg > 128 ? 255 : 0;
-          data[i] = data[i + 1] = data[i + 2] = value;
-        }
-        ctx.putImageData(imageData, 0, 0);
         resolve(canvas.toDataURL('image/png'));
       };
     });
   }
-
   private cleanText(text: string): string {
     return text.replace(/[^\w\s,.\-/:]/g, '').replace(/\s+/g, ' ').trim();
   }
 
-  private detectIdType(text: string): string {
-    const upperText = text.toUpperCase();
-    if (upperText.includes('UMID') || upperText.includes('UNIFIED')) return 'UMID';
-    if (upperText.includes('SSS')) return 'SSS';
-    if (upperText.includes('PAG-IBIG')) return 'PAG-IBIG';
-    if (upperText.includes('PHILHEALTH')) return 'PhilHealth';
-    if (upperText.includes('DRIVER')) return "Driver's License";
-    if (upperText.includes('POSTAL')) return 'Postal ID';
-    if (upperText.includes('PASSPORT')) return 'Passport';
-    if (upperText.includes('PRC')) return 'PRC ID';
-    if (upperText.includes('VOTER')) return "Voter's ID";
-    if (upperText.includes('TIN')) return 'TIN ID';
-    if (upperText.includes('SENIOR')) return 'Senior Citizen ID';
-    if (upperText.includes('PWD')) return 'PWD ID';
-    return 'Unknown ID';
-  }
+  parseDriversLicense(text: string) {
+    let cleanText = text
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .toUpperCase();
+    cleanText = cleanText
+      .replace(/REPUBLIC OF THE PHILIPPINES|DEPARTMENT OF TRANSPORTATION|LAND TRANSPORTATION OFFICE|DRIVER'?S LICENSE|OFFICE|TRANSPORTATION/g, '')
+      .replace(/MIDDLE NAME|LAST NAME|FIRST NAME|SEX|HEIGHT|WEIGHT|ADDRESS|NATIONALITY|BIRTH DATE|SIGNATURE|AGENCY CODE|EYES COLOR|BLOOD TYPE|CONDITIONS?/g, '')
+      .trim();
 
-  private extractName(text: string, idType: string): string | null {
-    const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
-    const commaPattern = /\b[A-Z]{2,}[A-Z\s]+,\s*[A-Z]{2,}[A-Z\s]+\b/;
-    const match = text.match(commaPattern);
-    if (match) return match[0].trim();
-    for (let i = 0; i < lines.length; i++) {
-      const lowerLine = lines[i].toLowerCase();
-      if ((lowerLine.includes('name') || lowerLine.includes('nombre')) && i + 1 < lines.length) {
-        const nextLine = lines[i + 1];
-        if (/^[A-Z\s,.-]{8,50}$/.test(nextLine)) return nextLine.trim();
-      }
+    const result: any = {};
+    result.idType = "Driver's License";
+    const nameMatch = cleanText.match(/([A-ZÑ\s]+),\s*([A-ZÑ\s]+)/);
+    if (nameMatch) {
+      result.name = nameMatch[0]
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\b(MIDDLE NAME|LAND|OFFICE|TRANSPORTATION)\b/g, '')
+        .trim();
+    } else {
+      result.name = '';
     }
-    return null;
+    const licMatch = cleanText.match(/[A-Z]\d{2}-\d{2}-\d{6}/);
+    result.licenseNumber = licMatch ? licMatch[0] : '';
+    const dateMatches = cleanText.match(/\b(19|20)\d{2}\/\d{2}\/\d{2}\b/g);
+    result.birthDate = dateMatches?.[0] || '';
+    result.expirationDate = dateMatches?.[1] || '';
+    const addrMatch = cleanText.match(/PRK\s?[0-9A-Z\s,.-]+CITY/);
+    result.address = addrMatch ? addrMatch[0].trim() : '';
+    const bloodMatch = cleanText.match(/\b(O|A|B|AB)[+-]\b/);
+    result.bloodType = bloodMatch ? bloodMatch[0] : '';
+    const heightMatch = cleanText.match(/\b\d\.\d{2}\b/);
+    result.height = heightMatch ? heightMatch[0] : '';
+    const natMatch = cleanText.match(/\bPHL\b/);
+    result.nationality = natMatch ? natMatch[0] : '';
+    return result;
   }
-
-  private extractIdNumber(text: string, idType: string): string | null {
-    const patterns = [
-      /\b[A-Z]{1,4}[-\s]?\d{2}[-\s]?\d{6,8}\b/,
-      /\b\d{2}[-\s]?\d{7}[-\s]?\d{1}\b/,
-      /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/,
-      /\b\d{8,12}\b/,
-    ];
-    for (const p of patterns) {
-      const match = text.match(p);
-      if (match) return match[0];
-    }
-    return null;
-  }
-
-  // 🧩 UI Actions
-  saveAndContinue() {
-    console.log('Record Saved:', this.currentPersonData);
-    this.resetCurrentScan();
-  }
-
   cancelScan() {
     this.resetCurrentScan();
   }
+  saveAndContinue() {
+    console.log('Saving scan result:', this.currentPersonData);
+    this.PurchaseServices.lookupName(this.currentPersonData?.name!).subscribe((data: any) => {
+      console.log(data);
+      this.Name = data.buyers_name;
+      this.PaDisplay = data.sales_temp_pa;
+      this.number = data.contact_number;
+    });
+  }
 
-  resetCurrentScan() {
+  private resetCurrentScan() {
     this.capturedImage = '';
-    this.scanResult = '';
     this.currentPersonData = null;
     this.scanning = false;
     this.loading = false;
-  }
-
-  viewDetails(person: PersonData) {
-    this.selectedPerson = person;
-  }
-
-  closeDetails() {
-    this.selectedPerson = null;
-  }
-
-  Idselected() {
-    console.log('Selected ID:', this.selectedID);
   }
 }

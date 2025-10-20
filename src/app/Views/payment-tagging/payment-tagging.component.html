@@ -1,0 +1,55 @@
+<div class="w-full h-dvh flex flex-col">
+  <div class="p-5 flex flex-col gap-3 items-start">
+    <span [routerLink]="['/home']" routerLinkActive="router-link-active" >Back</span>
+    <header class="font-bold text-3xl font-Playfair">
+      Payment Information
+    </header>
+  </div>
+  <div class="h-dvh bg-secondary rounded-t-[50px] px-7 pt-10">
+    <form>
+      <div>
+        <label for="">Purchase Agreement</label>
+        <div class="flex flex-row items-center gap-2">
+          <div class="flex flex-row items-center gap-3 bg-white p-2 mt-1 border-b-2 w-full">
+            <lucide-icon [img]="salesPA"></lucide-icon>
+            <input type="text" name="SalesPaID" [(ngModel)]="SalesPaID" id="" class="w-full outline-none">
+          </div>
+          <lucide-icon [img]="scan" size="35px" class="p-1 bg-primary text-white rounded-md" (click)="lookup()"></lucide-icon>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-col border-b-2 pb-2">
+        <label for="" class="font-semibold">Name</label>
+        <span class="mt-2">{{name}}</span>
+      </div>
+      <div class="mt-4 flex flex-col border-b-2 pb-2">
+        <label for="" class="font-semibold">Contact Number</label>
+        <span class="mt-2">{{number}}</span>
+      </div>
+      <div class="mt-5">
+        <label for="">OTP</label>
+        <div class="flex flex-row items-center gap-2">
+          <div class="flex flex-row items-center gap-3 bg-white p-2 mt-1 border-b-2 w-full" ariaDisabled>
+            <lucide-icon [img]="RectangleEllipsis"></lucide-icon>
+            <input type="text" name="OTPConfirmation" [(ngModel)]="OTPConfirmation" id="" class="w-full outline-none">
+          </div>
+          <button class="!p-3 bg-primary text-white !rounded-md disabled:!bg-gray-600" (click)="lookup()" [disabled]="OTPConfirmation != otpCode || otpCode == ''">
+            <lucide-icon [img]="check" size="20px" ></lucide-icon>
+          </button>
+        </div>
+        <span>{{otpCode}}</span>
+        <div class="mt-2">
+          <label>Payment Amount</label>
+          <div class="mt-1">
+            <div class="w-full flex flex-row items-center mt-1 gap-2 bg-white p-2 rounded-lg">
+              <span>Amount:</span>
+              <input type="text" name="Amount" [(ngModel)]="Amount" class="w-full p-1 outline-none placeholder:text-black" placeholder="Payment Amount"/>
+            </div>
+          </div>
+        </div>
+        <button class="w-full !p-4 mt-3 text-white tracking-wider !rounded-full bg-primary" (click)="confirmPayment()">
+          Confirm Payment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

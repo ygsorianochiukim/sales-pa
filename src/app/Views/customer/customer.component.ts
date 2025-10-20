@@ -9,13 +9,15 @@ import { Buyers } from 'src/app/Services/Buyers/buyers';
 import { IonItem } from "@ionic/angular/standalone";
 import { IonicModule } from '@ionic/angular';
 import { Build } from 'ionicons/dist/types/stencil-public-runtime';
+import { Otp } from 'src/app/Models/OTP/otp.model';
+import { SendOtpServices } from 'src/app/Services/sendOtp/send-otp-services';
 
 @Component({
   selector: 'app-customer',
   imports: [IonicModule, LucideAngularModule, RouterLink, FormsModule, CommonModule, HttpClientModule],
   templateUrl: './customer.component.html',
   styleUrls: ['./customer.component.scss'],
-  providers: [Buyers]
+  providers: [Buyers , SendOtpServices]
 })
 export class CustomerComponent implements OnInit {
   readonly user = User;
@@ -29,6 +31,12 @@ export class CustomerComponent implements OnInit {
   readonly building = Building2;
 
   otpCode: string = '';
+  otpModel: Otp ={
+    otp: 0,
+    message: '',
+    name: '',
+    contact: 0
+  }
   steps: string[] = ['Personal Info', 'Address Info', 'Other Info'];
   currentStep: number = 0;
   nameFields: any = {
@@ -59,7 +67,7 @@ export class CustomerComponent implements OnInit {
   municipalitiesField: string[] = [];
   barangaysField: string[] = [];
 
-  constructor(private BuyersServices: Buyers, private http: HttpClient) {}
+  constructor(private BuyersServices: Buyers, private http: HttpClient, private SendOTPServices: SendOtpServices) {}
 
   ngOnInit() {
     this.http.get('/assets/address.json').subscribe((data: any) => {
@@ -70,7 +78,10 @@ export class CustomerComponent implements OnInit {
   nextStep() {
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep++;
-      this.generateOTP();
+      if (this.currentStep ==1) {
+        this.generateOTP();
+        debugger;
+      } 
     }
   }
 
@@ -125,6 +136,13 @@ export class CustomerComponent implements OnInit {
 
   generateOTP() {
     this.otpCode = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+    this.otpModel.contact = Number(this.buyersField.contact_number);
+    this.otpModel.name = this.nameFields.first_name + ' ' +this.nameFields.middle_name + ' ' + this.nameFields.last_name
+    this.otpModel.otp = Number(this.otpCode);
+    this.otpModel.message = `Good Day Mr/Ms. ${this.otpModel.name}. We Would like to infotm you that your OTP is ${this.otpModel.otp}. Thank you`
+    this.SendOTPServices.sendOtp(this.otpModel).subscribe(() => {
+
+    });
   }
 
   submitBuyersInfo() {

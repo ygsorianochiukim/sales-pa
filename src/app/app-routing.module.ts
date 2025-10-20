@@ -6,6 +6,7 @@ import { SalesPAComponent } from './Views/sales-pa/sales-pa.component';
 import { PaymentsComponent } from './Views/payments/payments.component';
 import { SubsequentComponent } from './Views/subsequent/subsequent.component';
 import { ScanIDComponent } from './Views/scan-id/scan-id.component';
+import { PaymentTaggingComponent } from './Views/payment-tagging/payment-tagging.component';
 
 const routes: Routes = [
   {path:'',redirectTo: 'home' , pathMatch:'full'},
@@ -15,6 +16,7 @@ const routes: Routes = [
   {path:'payment',component:PaymentsComponent},
   {path:'subsequent',component:SubsequentComponent},
   {path:'scan',component:ScanIDComponent},
+  {path:'firstPayment',component:PaymentTaggingComponent},
 ];
 
 @NgModule({
