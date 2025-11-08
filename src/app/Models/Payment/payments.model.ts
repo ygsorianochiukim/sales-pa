@@ -4,4 +4,5 @@ export interface Payments {
     amount?: number | null;
     otp?: number | null;
     created_by?: number | null;
+    image_binary?: string;
 }

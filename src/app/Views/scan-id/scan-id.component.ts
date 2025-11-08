@@ -43,6 +43,7 @@ export class ScanIDComponent {
   PaDisplay: string = '';
   Name: string = '';
   number: string = '';
+  payeeID: number | null = null;
 
   constructor(private platform: Platform, private router: Router, private PurchaseServices : PurchaseServices) {
     this.isWeb = !this.platform.is('capacitor');
@@ -267,7 +268,16 @@ export class ScanIDComponent {
       this.Name = data.buyers_name;
       this.PaDisplay = data.sales_temp_pa;
       this.number = data.contact_number;
+      this.payeeID = data.buyers_i_information_id;
     });
+  }
+  proceedPayment(){
+    sessionStorage.setItem('paymentName' , this.Name);
+    sessionStorage.setItem('PAgreement' , this.PaDisplay);
+    sessionStorage.setItem('number' , this.number);
+    sessionStorage.setItem('buyerID' , this.payeeID?.toString()!);
+    sessionStorage.setItem('capturedImage', this.capturedImage);
+    this.router.navigate(['/scanPayment']);
   }
 
   private resetCurrentScan() {

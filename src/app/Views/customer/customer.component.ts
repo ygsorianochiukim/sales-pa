@@ -139,7 +139,7 @@ export class CustomerComponent implements OnInit {
     this.otpModel.contact = Number(this.buyersField.contact_number);
     this.otpModel.name = this.nameFields.first_name + ' ' +this.nameFields.middle_name + ' ' + this.nameFields.last_name
     this.otpModel.otp = Number(this.otpCode);
-    this.otpModel.message = `Good Day Mr/Ms. ${this.otpModel.name}. We Would like to infotm you that your OTP is ${this.otpModel.otp}. Thank you`
+    this.otpModel.message = `Good Day Mr/Ms. ${this.otpModel.name}. We Would like to inform you that your OTP is ${this.otpModel.otp}. Thank you`
     this.SendOTPServices.sendOtp(this.otpModel).subscribe(() => {
 
     });

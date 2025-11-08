@@ -9,13 +9,10 @@
     <form>
       <div>
         <label for="">Purchase Agreement</label>
-        <div class="flex flex-row items-center gap-2">
-          <div class="flex flex-row items-center gap-3 bg-white p-2 mt-1 border-b-2 w-full">
-            <lucide-icon [img]="salesPA"></lucide-icon>
-            <input type="text" name="SalesPaID" [(ngModel)]="SalesPaID" id="" class="w-full outline-none">
-          </div>
-          <lucide-icon [img]="scan" size="35px" class="p-1 bg-primary text-white rounded-md" (click)="lookup()"></lucide-icon>
-        </div>
+      </div>
+      <div class="mt-5 flex flex-col border-b-2 pb-2">
+        <label for="" class="font-semibold">Purchase Agreement</label>
+        <span class="mt-2">{{SalesPA}}</span>
       </div>
       <div class="mt-5 flex flex-col border-b-2 pb-2">
         <label for="" class="font-semibold">Name</label>
@@ -25,7 +22,7 @@
         <label for="" class="font-semibold">Contact Number</label>
         <span class="mt-2">{{number}}</span>
       </div>
-      <div class="mt-5">
+      <div class="mt-2">
         <label>Payment Amount</label>
         <div class="mt-1">
           <div class="w-full flex flex-row items-center mt-1 gap-2 bg-white p-2 rounded-lg">
@@ -34,7 +31,7 @@
           </div>
         </div>
       </div>
-      <button class="w-full !p-4 bg-primary !text-white rounded-full !mt-3" (click)="generateOTP()">Generate OTP</button>
+      <input type="submit" value="Generate OTP" (click)="generateOTP()" class="bg-primary !text-white p-3 w-full rounded-full !mt-3">
       <div class="mt-5">
         <label for="">OTP</label>
         <div class="flex flex-row items-center gap-2">
@@ -43,9 +40,7 @@
             <input type="text" name="OTPConfirmation" [(ngModel)]="OTPConfirmation" id="" class="w-full outline-none">
           </div>
         </div>
-        <span>{{otpCode}}</span>
-        
-        <button class="w-full !p-4 mt-3 text-white tracking-wider !rounded-full bg-primary disabled:!bg-gray-600" (click)="confirmPayment()" [disabled]="otpCode != OTPConfirmation || otpCode == ''">
+        <button class="w-full !p-4 mt-3 text-white tracking-wider !rounded-full bg-primary disabled:!bg-gray-600" (click)="confirmBeforeSubmit()" [disabled]="otpCode != OTPConfirmation || otpCode == ''">
           Confirm Payment
         </button>
       </div>

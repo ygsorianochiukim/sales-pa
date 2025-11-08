@@ -61,12 +61,17 @@
         <span class="text-lg font-semibold text-gray-800">{{ Name }}</span>
       </div>
       <div class="flex flex-col">
-        <span class="text-sm text-gray-500 font-medium mb-1">Full Name</span>
+        <span class="text-sm text-gray-500 font-medium mb-1">Purchase Agreement</span>
         <span class="text-lg font-semibold text-gray-800">{{ PaDisplay }}</span>
       </div>
       <div class="flex flex-col">
-        <span class="text-sm text-gray-500 font-medium mb-1">Full Name</span>
+        <span class="text-sm text-gray-500 font-medium mb-1">Contact Number</span>
         <span class="text-lg font-semibold text-gray-800">{{ number }}</span>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="proceedPayment()" class="bg-primary w-full !py-3 text-white !rounded-full">
+          Make a Payment
+        </button>
       </div>
     </div>
   </div>

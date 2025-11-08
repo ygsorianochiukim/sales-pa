@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 import { LucideAngularModule , IdCard , ScanSearch , CircleCheckBigIcon , RectangleEllipsis , PhilippinePeso } from 'lucide-angular';
 import { Payments } from 'src/app/Models/Payment/payments.model';
 import { PaymentServices } from 'src/app/Services/Payment/payment-services';
@@ -35,11 +36,9 @@ export class PaymentTaggingComponent  implements OnInit {
     otp: null,
     created_by: 2,
   }
-  constructor(private PurchaseServices: PurchaseServices, private PaymentServices: PaymentServices) { }
+  constructor(private PurchaseServices: PurchaseServices, private PaymentServices: PaymentServices , private AlertController: AlertController , private Router: Router) { }
 
   ngOnInit() {
-
-
   }
 
   lookup(){
@@ -47,15 +46,36 @@ export class PaymentTaggingComponent  implements OnInit {
       this.name = data.buyers_name;
       this.number = data.contact_number;
       this.buyersID = data.buyers_i_information_id;
-      this.generateOTP();
     });
   }
 
   generateOTP() {
     this.otpCode = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
   }
+  async confirmPayment(){
+    const alert = await this.AlertController.create({
+      header: 'Payment added complete!',
+      message: 'Payment added complete!',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => console.log('Alert canceled'),
+        },
+        {
+          text: 'OK',
+          role: 'confirm',
+          handler: () => {
+            this.confirmPaymentProcess();
+            this.Router.navigate(['/home']);
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
 
-  confirmPayment(){
+  confirmPaymentProcess(){
     this.paymentFields.buyers_i_information_id = this.buyersID;
     this.paymentFields.sales_temp_pa = this.SalesPaID!;
     this.paymentFields.amount = this.Amount;
@@ -63,7 +83,5 @@ export class PaymentTaggingComponent  implements OnInit {
     this.PaymentServices.storePayments(this.paymentFields).subscribe(() => {
 
     });
-    
   }
-
 }
