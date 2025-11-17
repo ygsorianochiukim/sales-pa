@@ -1,5 +1,5 @@
 export interface Otp {
-    otp: number,
+    otp: string,
     message: string,
     name: string,
     contact:number

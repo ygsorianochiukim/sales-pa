@@ -40,7 +40,7 @@ export class PaymentScanComponent  implements OnInit {
     image_binary: '',
   }
   otpModel: Otp ={
-      otp: 0,
+      otp: '',
       message: '',
       name: '',
       contact: 0
@@ -53,7 +53,7 @@ export class PaymentScanComponent  implements OnInit {
     this.otpCode = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
     this.otpModel.contact = this.number!;
     this.otpModel.name = this.name!;
-    this.otpModel.otp = Number(this.otpCode);
+    this.otpModel.otp = this.otpCode;
     this.otpModel.message = `Good Day Mr/Ms. ${this.otpModel.name}. We Would like to inform you that your OTP is ${this.otpModel.otp} with Payment amount of ${this.Amount}. Thank you`
     this.SendOTPServices.sendOtp(this.otpModel).subscribe(() => {
 

@@ -9,18 +9,20 @@ import { ScanIDComponent } from './Views/scan-id/scan-id.component';
 import { PaymentTaggingComponent } from './Views/payment-tagging/payment-tagging.component';
 import { PaymentScanComponent } from './Views/payments/payment-scan/payment-scan.component';
 import { LoginComponent } from './auth/login/login.component';
+import { SettingsComponent } from './Views/settings/settings.component';
 
 const routes: Routes = [
   {path:'',redirectTo: 'login' , pathMatch:'full'},
-  {path:'login',component:LoginComponent},
-  {path:'home',component:HomeComponent},
-  {path:'customer',component:CustomerComponent},
-  {path:'purchase',component:SalesPAComponent},
-  {path:'payment',component:PaymentsComponent},
-  {path:'subsequent',component:SubsequentComponent},
-  {path:'scan',component:ScanIDComponent},
-  {path:'firstPayment',component:PaymentTaggingComponent},
-  {path:'scanPayment',component:PaymentScanComponent},
+  {path:'login',component: LoginComponent},
+  {path:'home',component: HomeComponent},
+  {path:'customer',component: CustomerComponent},
+  {path:'purchase',component: SalesPAComponent},
+  {path:'payment',component: PaymentsComponent},
+  {path:'subsequent',component: SubsequentComponent},
+  {path:'scan',component: ScanIDComponent},
+  {path:'firstPayment',component: PaymentTaggingComponent},
+  {path:'scanPayment',component: PaymentScanComponent},
+  {path:'settings/:id',component: SettingsComponent},
 ];
 
 @NgModule({

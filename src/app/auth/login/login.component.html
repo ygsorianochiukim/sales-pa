@@ -1,16 +1,18 @@
 <div class="h-dvh bg-primary w-full flex flex-col items-center justify-center gap-7">
-  <img src="assets/applogo.png" alt="" class="w-[60%] animate-pulse"  >
-  <div class="w-[90%] h-70 p-5 bg-secondary rounded-xl flex flex-col justify-center gap-4">
+  <img src="assets/applogo.png" alt="" class="w-[40%]">
+  <div class="w-[90%] h-70 p-5 bg-secondary rounded-3xl flex flex-col justify-center gap-4">
     <header class="text-3xl">LOGIN</header>
-    <form class="flex flex-col gap-4">
+    <form class="flex flex-col gap-4" (ngSubmit)="login()">
       <div class="w-full p-2 border rounded-xl flex flex-row items-center gap-2">
         <lucide-icon [img]="usernameIco"></lucide-icon>
-        <input type="text" name="" id="" class="w-full outline-none m-0" placeholder="Username">
+        <input type="text" name="emailOrUsername" [(ngModel)]="emailOrUsername" id="" class="w-full outline-none m-0" placeholder="Username">
       </div>
       <div class="w-full p-2 border rounded-xl flex flex-row items-center gap-2">
         <lucide-icon [img]="passwordIco"></lucide-icon>
-        <input type="password" name="" id="" class="w-full outline-none m-0 flex-1 " placeholder="Password">
+        <input type="password" name="password" [(ngModel)]="password" id="" class="w-full outline-none m-0 flex-1 " placeholder="Password">
       </div>
+      <input type="submit" value="Login" class="bg-primary p-3 w-full rounded-xl !text-white font-semibold text-base">
     </form>
+    <ion-text color="danger" *ngIf="errorMessage">{{ errorMessage }}</ion-text>
   </div>
 </div>

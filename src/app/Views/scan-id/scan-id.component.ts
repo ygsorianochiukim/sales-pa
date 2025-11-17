@@ -74,10 +74,24 @@ export class ScanIDComponent {
 
       if (result?.barcodes?.length > 0) {
         const qrValue = result.barcodes[0].rawValue;
+
+        let fullName = 'Detected from QR';
+        let parsedData: any = null;
+
+        try {
+          parsedData = JSON.parse(qrValue);
+          if (parsedData?.subject) {
+            const fName = parsedData.subject.fName || '';
+            const lName = parsedData.subject.lName || '';
+            fullName = `${fName} ${lName}`.trim();
+          }
+        } catch {
+        }
+
         this.currentPersonData = {
           idType: 'National ID',
-          id: qrValue,
-          name: 'Detected from QR',
+          id: parsedData?.subject?.PCN || qrValue,
+          name: fullName,
           rawText: qrValue,
           timestamp: new Date(),
         };
@@ -92,6 +106,7 @@ export class ScanIDComponent {
       this.scanning = false;
     }
   }
+
   async startOCRScanner() {
     try {
       this.scanning = true;
@@ -180,18 +195,29 @@ export class ScanIDComponent {
             ctx.drawImage(img, 0, 0);
             const data = ctx.getImageData(0, 0, img.width, img.height);
             const code = jsQR(data.data, data.width, data.height);
-
             if (code) {
               const qrValue = code.data;
+              let fullName = 'Detected from uploaded QR';
+              let parsedData: any = null;
+              try {
+                parsedData = JSON.parse(qrValue);
+                if (parsedData?.subject) {
+                  const fName = parsedData.subject.fName || '';
+                  const lName = parsedData.subject.lName || '';
+                  fullName = `${fName} ${lName}`.trim();
+                }
+              } catch {
+              }
               this.currentPersonData = {
                 idType: 'National ID',
-                id: qrValue,
-                name: 'Detected from uploaded QR',
+                id: parsedData?.subject?.PCN || qrValue,
+                name: fullName,
                 rawText: qrValue,
                 timestamp: new Date(),
               };
-            } else alert('No QR detected.');
-
+            } else {
+              alert('No QR detected.');
+            }
             this.loading = false;
             resolve();
           };

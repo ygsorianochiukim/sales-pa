@@ -11,13 +11,14 @@ import { IonicModule } from '@ionic/angular';
 import { Build } from 'ionicons/dist/types/stencil-public-runtime';
 import { Otp } from 'src/app/Models/OTP/otp.model';
 import { SendOtpServices } from 'src/app/Services/sendOtp/send-otp-services';
+import { AuthServices } from 'src/app/Services/auth/auth';
 
 @Component({
   selector: 'app-customer',
   imports: [IonicModule, LucideAngularModule, RouterLink, FormsModule, CommonModule, HttpClientModule],
   templateUrl: './customer.component.html',
   styleUrls: ['./customer.component.scss'],
-  providers: [Buyers , SendOtpServices]
+  providers: [Buyers , SendOtpServices, AuthServices]
 })
 export class CustomerComponent implements OnInit {
   readonly user = User;
@@ -29,10 +30,12 @@ export class CustomerComponent implements OnInit {
   readonly map = MapPin;
   readonly work = BriefcaseBusiness;
   readonly building = Building2;
-
+  Name: string = '';
+  id: number = 0;
+  User: any;
   otpCode: string = '';
   otpModel: Otp ={
-    otp: 0,
+    otp: '',
     message: '',
     name: '',
     contact: 0
@@ -59,7 +62,7 @@ export class CustomerComponent implements OnInit {
     birthplace: '',
     occupation: '',
     company_name: '',
-    created_by: 2,
+    created_by: 0,
     otp: '',
   };
   addressData: any = {};
@@ -67,12 +70,20 @@ export class CustomerComponent implements OnInit {
   municipalitiesField: string[] = [];
   barangaysField: string[] = [];
 
-  constructor(private BuyersServices: Buyers, private http: HttpClient, private SendOTPServices: SendOtpServices) {}
+  constructor(private BuyersServices: Buyers, private http: HttpClient, private SendOTPServices: SendOtpServices , private AuthServices: AuthServices) {}
 
   ngOnInit() {
     this.http.get('/assets/address.json').subscribe((data: any) => {
       this.addressData = data;
       this.extractProvinces();
+    });
+    this.fetchUser();
+  }
+  fetchUser(){
+    this.AuthServices.getUserFromAPI().subscribe((Userdata) => {
+      this.User = Userdata;
+      this.Name = this.User.firstname + " " + this.User.lastname;
+      this.id = this.User.s_bpartner_employee_id;
     });
   }
   nextStep() {
@@ -80,7 +91,6 @@ export class CustomerComponent implements OnInit {
       this.currentStep++;
       if (this.currentStep ==1) {
         this.generateOTP();
-        debugger;
       } 
     }
   }
@@ -134,19 +144,20 @@ export class CustomerComponent implements OnInit {
     }
   }
 
-  generateOTP() {
+  generateOTP() 
+  {
     this.otpCode = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
     this.otpModel.contact = Number(this.buyersField.contact_number);
     this.otpModel.name = this.nameFields.first_name + ' ' +this.nameFields.middle_name + ' ' + this.nameFields.last_name
-    this.otpModel.otp = Number(this.otpCode);
+    this.otpModel.otp = this.otpCode;
     this.otpModel.message = `Good Day Mr/Ms. ${this.otpModel.name}. We Would like to inform you that your OTP is ${this.otpModel.otp}. Thank you`
     this.SendOTPServices.sendOtp(this.otpModel).subscribe(() => {
-
     });
   }
 
   submitBuyersInfo() {
     this.buyersField.buyers_name = this.nameFields.first_name + ' ' +this.nameFields.middle_name + ' ' + this.nameFields.last_name,
+    this.buyersField.created_by = this.id;
     this.BuyersServices.storeBuyers(this.buyersField).subscribe(() => {
       this.reset();
     });
